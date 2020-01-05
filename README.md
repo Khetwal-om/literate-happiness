@@ -374,3 +374,113 @@ urlpatterns = [
 13. 127.0.0.1 displays all the students
 
 14. 127.0.0.1/create will display the form 
+
+
+
+
+
+
+
+
+
+
+15. jQuery to preventDefault form submission :)
+
+
+```html
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+{#    <script src="{% static 'jquery.js' %}"></script>#}
+
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+</head>
+<body>
+    <form class="form-student-ajax" method="post" action="{% url 'create' %}">
+        {% csrf_token %}
+
+        <input type="text" name="name" >
+        <input type="number" name="age">
+        <input type="text" name="school">
+        <input type="text" name="description">
+        <input type="submit" value="submit">
+
+    </form>
+
+    <script>
+
+        $(document).ready(function(){
+            var studentForm= $('.form-student-ajax');
+            studentForm.submit(function (event) {
+
+                event.preventDefault();
+                var thisForm=$(this);
+                var actionEndpoint=thisForm.attr("action");
+                var httpMethod=thisForm.attr("method");
+                var formData=thisForm.serialize();
+
+                $.ajax({
+                    url:actionEndpoint,
+                    method:httpMethod,
+                    data:formData,
+                    success:function (data) {
+                        console.log("success");
+                        console.log('00999');
+                        console.log(actionEndpoint);
+                        console.log(data);
+                        console.log(data.created);
+                        console.log(data.notcreated);
+                        window.location.href="/";
+
+                    },
+                    error:function (errorData) {
+                        console.log("error");
+                        console.log(errorData);
+                    }
+                })
+
+            });
+
+
+        })
+    </script>
+
+
+
+</body>
+</html>
+```
+
+
+
+16. These are the changes made in the views.py
+
+```python
+
+def create(request):
+    created=False
+    if request.method=='POST':
+        name=request.POST['name']
+        age=request.POST['age']
+        school=request.POST['school']
+        description=request.POST['description']
+        newstudent=Student.objects.create(name=name,age=age,school=school,description=description)
+        newstudent.save()
+        created=True
+        if request.is_ajax():
+            json_data={
+                "created":created,
+                "notcreated":not created,
+            }
+            print('hi')
+
+            return JsonResponse(json_data)
+            # return redirect('index')
+    else:
+        print(' something is wrong in the water')
+
+    return render(request,'studentform.html',{})
+```
